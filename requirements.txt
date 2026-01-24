@@ -1,0 +1,7 @@
+streamlit
+langchain
+sentence-transformers
+faiss-cpu
+transformers
+huggingface-hub
+python-dotenv
