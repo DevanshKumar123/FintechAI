@@ -1,8 +1,8 @@
 import faiss, os, numpy as np
 from embeddings.embedding_generator import generate_embeddings
 
-INDEX_PATH = "vectordb/faiss_index/index.faiss"
-DOC_PATH = "vectordb/faiss_index/docs.npy"
+INDEX_PATH = "vectorDB/faiss_index/index.faiss"
+DOC_PATH = "vectorDB/faiss_index/docs.npy"
 
 def build_faiss_index():
     if os.path.exists(INDEX_PATH):

@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 
 from vectorDB.build_index import build_faiss_index
 from retrieval.retriever import retrieve_docs
-from llm.hf_llm import generate_answer
+from LLM.hf_llm import generate_answer
 from utils.guardrails import is_finance_query
 from utils.config import DISCLAIMER, TERMS
 from realtime.stocks import get_stock_info
@@ -54,8 +54,7 @@ if query:
 ### 📊 {stock['name']}
 
 - **Current Price:** {stock['price']} {stock['currency']}
-- **Recent Price History (last few entries):**
-  {stock['history']}
+- **Recent Price History:** {stock['history']}
 - **More details:** {stock['link']}
 
 ⚠️ *This is educational market information only, not a buy/sell recommendation.*
@@ -64,19 +63,16 @@ if query:
         # ---------------- RAG + LLM FLOW ----------------
         else:
             retrieved_docs = retrieve_docs(query, index, docs)
-
             context = "\n".join(retrieved_docs)
 
-            # Add short-term framing if needed
             if is_short_term:
                 context = (
-                    "The user is asking for **educational short-term market analysis**. "
-                    "Do NOT provide buy/sell signals or guaranteed returns. "
-                    "Explain commonly observed stocks, momentum factors, and risks.\n\n"
+                    "The user is asking for educational short-term market analysis. "
+                    "Do NOT give buy/sell calls or guaranteed returns. "
+                    "Explain risks, trends, and general observations.\n\n"
                     + context
                 )
 
-            # Build recent chat history (last 5 turns)
             history_text = "\n".join(
                 [f"{role}: {msg}" for role, msg in st.session_state.chat[-5:]]
             )
@@ -94,3 +90,4 @@ for role, msg in st.session_state.chat:
 st.markdown("---")
 st.warning(DISCLAIMER)
 st.info(TERMS)
+
