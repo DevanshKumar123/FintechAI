@@ -5,91 +5,94 @@ sys.path.append(os.getcwd())
 
 from vectordb.build_index import build_faiss_index
 from retrieval.retriever import retrieve_docs
-<<<<<<< HEAD
-from LLM.hf_llm import generate_answer
-=======
 from realtime.stocks import get_stock_data
 from llm.hf_llm import generate_answer
->>>>>>> 7c8d023 (Updated info)
 from utils.guardrails import is_finance_query
 from utils.config import DISCLAIMER
 
-st.set_page_config(page_title="AI Finance Chatbot")
-
+st.set_page_config(page_title="AI Finance Chatbot", layout="centered")
 st.title("💰 AI Finance Assistant")
 
-# Chat memory
+# ---------------- SESSION MEMORY ----------------
 if "chat" not in st.session_state:
     st.session_state.chat = []
 
-index, docs = build_faiss_index()
+# ---------------- OPTIONAL ASSUMPTIONS ----------------
+st.sidebar.header("Investment Assumptions (Optional)")
 
+amount = st.sidebar.selectbox(
+    "Investment Amount",
+    ["Not specified", "₹50,000", "₹1 lakh", "₹5 lakh"]
+)
+
+risk = st.sidebar.selectbox(
+    "Risk Profile",
+    ["Not specified", "Low", "Moderate", "High"]
+)
+
+horizon = st.sidebar.selectbox(
+    "Time Horizon",
+    ["Not specified", "Short-term (1–2 yrs)", "Medium-term (3–5 yrs)", "Long-term (5+ yrs)"]
+)
+
+assumptions = {
+    "amount": amount,
+    "risk": risk,
+    "horizon": horizon
+}
+
+# ---------------- LOAD VECTOR DB ----------------
+@st.cache_resource
+def load_index():
+    return build_faiss_index()
+
+index, docs = load_index()
+
+# ---------------- USER INPUT ----------------
 query = st.chat_input("Ask finance, stock, tax, or investment questions...")
 
 if query:
     if not is_finance_query(query):
-        st.error("This chatbot supports only finance-related queries.")
+        st.error("❌ This assistant supports only finance-related queries.")
     else:
         st.session_state.chat.append(("user", query))
 
-<<<<<<< HEAD
-        is_short_term = any(k in query.lower() for k in SHORT_TERM_KEYWORDS)
-
-        # ---------------- REAL-TIME STOCK QUERY ----------------
-        if ".ns" in query.lower() or ".bo" in query.lower():
-            ticker = query.strip().split()[-1].upper()
-            stock = get_stock_info(ticker)
-
-            response = f"""
-### 📊 {stock['name']}
-
-- **Current Price:** {stock['price']} {stock['currency']}
-- **Recent Price History:** {stock['history']}
-- **More details:** {stock['link']}
-
-⚠️ *This is educational market information only, not a buy/sell recommendation.*
-"""
-
-        # ---------------- RAG + LLM FLOW ----------------
-        else:
-            retrieved_docs = retrieve_docs(query, index, docs)
-            context = "\n".join(retrieved_docs)
-
-            if is_short_term:
-                context = (
-                    "The user is asking for educational short-term market analysis. "
-                    "Do NOT give buy/sell calls or guaranteed returns. "
-                    "Explain risks, trends, and general observations.\n\n"
-                    + context
-                )
-
-            history_text = "\n".join(
-                [f"{role}: {msg}" for role, msg in st.session_state.chat[-5:]]
-            )
-
-            response = generate_answer(context, history_text, query)
-=======
-        # Stock related
+        # ---------------- STOCK-RELATED QUERY ----------------
         if "stock" in query.lower():
             stocks = get_stock_data()
-            stock_text = ""
+
+            stock_context = ""
             for s in stocks:
-                stock_text += f"{s['name']} | Price: {s['price']} {s['currency']} | {s['link']}\n"
-            response = generate_answer(stock_text, query)
+                stock_context += (
+                    f"{s['name']} | "
+                    f"Price: {s['price']} {s['currency']} | "
+                    f"{s['link']}\n"
+                )
+
+            response = generate_answer(
+                context=stock_context,
+                question=query,
+                assumptions=assumptions,
+                chat_history=st.session_state.chat
+            )
+
+        # ---------------- RAG + LLM ----------------
         else:
-            context = "\n".join(retrieve_docs(query, index, docs))
-            response = generate_answer(context, query)
->>>>>>> 7c8d023 (Updated info)
+            retrieved = retrieve_docs(query, index, docs)
+            context = "\n".join(retrieved)
+
+            response = generate_answer(
+                context=context,
+                question=query,
+                assumptions=assumptions,
+                chat_history=st.session_state.chat
+            )
 
         st.session_state.chat.append(("assistant", response))
 
+# ---------------- RENDER CHAT ----------------
 for role, msg in st.session_state.chat:
     with st.chat_message(role):
         st.markdown(msg)
 
 st.warning(DISCLAIMER)
-<<<<<<< HEAD
-st.info(TERMS)
-
-=======
->>>>>>> 7c8d023 (Updated info)

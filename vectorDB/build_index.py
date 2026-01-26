@@ -1,14 +1,26 @@
-import faiss, numpy as np, os
+import faiss
+import numpy as np
+
 from embeddings.embedding_generator import generate_embeddings
+from transformation.text_splitter import split_text
 
-<<<<<<< HEAD
-INDEX_PATH = "vectorDB/faiss_index/index.faiss"
-DOC_PATH = "vectorDB/faiss_index/docs.npy"
-
-=======
->>>>>>> 7c8d023 (Updated info)
 def build_faiss_index():
-    docs, vectors = generate_embeddings()
-    index = faiss.IndexFlatL2(vectors.shape[1])
-    index.add(np.array(vectors))
-    return index, docs
+    """
+    Builds a FAISS vector index from finance documents.
+    """
+
+    # Step 1: Split raw data into chunks
+    documents = split_text()
+
+    # Step 2: Generate embeddings
+    embeddings = generate_embeddings(documents)
+
+    # Step 3: Convert embeddings to numpy array
+    embeddings_np = np.array(embeddings).astype("float32")
+
+    # Step 4: Build FAISS index
+    dimension = embeddings_np.shape[1]
+    index = faiss.IndexFlatL2(dimension)
+    index.add(embeddings_np)
+
+    return index, documents
