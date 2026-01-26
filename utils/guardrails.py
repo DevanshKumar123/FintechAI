@@ -1,9 +1,7 @@
 FINANCE_KEYWORDS = [
-    "stock", "investment", "tax", "itr", "mutual fund",
-    "sip", "finance", "money", "income", "share", "market",
-    "budget", "saving", "loan", "interest"
+    "stock","investment","mutual fund","finance",
+    "tax","itr","market","share","sip","money"
 ]
 
-def is_finance_query(query: str) -> bool:
-    query = query.lower()
-    return any(word in query for word in FINANCE_KEYWORDS)
+def is_finance_query(q):
+    return any(k in q.lower() for k in FINANCE_KEYWORDS)

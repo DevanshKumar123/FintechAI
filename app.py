@@ -1,48 +1,38 @@
 import streamlit as st
-import sys
-import os
+import os, sys
 
-# Ensure project root is on path
 sys.path.append(os.getcwd())
 
-from vectorDB.build_index import build_faiss_index
+from vectordb.build_index import build_faiss_index
 from retrieval.retriever import retrieve_docs
+<<<<<<< HEAD
 from LLM.hf_llm import generate_answer
+=======
+from realtime.stocks import get_stock_data
+from llm.hf_llm import generate_answer
+>>>>>>> 7c8d023 (Updated info)
 from utils.guardrails import is_finance_query
-from utils.config import DISCLAIMER, TERMS
-from realtime.stocks import get_stock_info
+from utils.config import DISCLAIMER
 
-# ---------------- STREAMLIT CONFIG ----------------
-st.set_page_config(page_title="AI Finance Assistant", layout="centered")
+st.set_page_config(page_title="AI Finance Chatbot")
+
 st.title("💰 AI Finance Assistant")
 
-# ---------------- SESSION MEMORY ----------------
+# Chat memory
 if "chat" not in st.session_state:
     st.session_state.chat = []
 
-# ---------------- LOAD VECTOR DB (ONCE) ----------------
-@st.cache_resource
-def load_vector_db():
-    return build_faiss_index()
+index, docs = build_faiss_index()
 
-index, docs = load_vector_db()
-
-# ---------------- SHORT-TERM DETECTION ----------------
-SHORT_TERM_KEYWORDS = [
-    "today", "5 days", "short term", "this week",
-    "next few days", "swing", "for few days"
-]
-
-# ---------------- USER INPUT ----------------
-query = st.chat_input("Ask a finance-related question...")
+query = st.chat_input("Ask finance, stock, tax, or investment questions...")
 
 if query:
-    # Finance-only guard
     if not is_finance_query(query):
-        st.error("❌ This assistant only supports finance-related queries.")
+        st.error("This chatbot supports only finance-related queries.")
     else:
         st.session_state.chat.append(("user", query))
 
+<<<<<<< HEAD
         is_short_term = any(k in query.lower() for k in SHORT_TERM_KEYWORDS)
 
         # ---------------- REAL-TIME STOCK QUERY ----------------
@@ -78,16 +68,28 @@ if query:
             )
 
             response = generate_answer(context, history_text, query)
+=======
+        # Stock related
+        if "stock" in query.lower():
+            stocks = get_stock_data()
+            stock_text = ""
+            for s in stocks:
+                stock_text += f"{s['name']} | Price: {s['price']} {s['currency']} | {s['link']}\n"
+            response = generate_answer(stock_text, query)
+        else:
+            context = "\n".join(retrieve_docs(query, index, docs))
+            response = generate_answer(context, query)
+>>>>>>> 7c8d023 (Updated info)
 
         st.session_state.chat.append(("assistant", response))
 
-# ---------------- RENDER CHAT ----------------
 for role, msg in st.session_state.chat:
     with st.chat_message(role):
         st.markdown(msg)
 
-# ---------------- FOOTER ----------------
-st.markdown("---")
 st.warning(DISCLAIMER)
+<<<<<<< HEAD
 st.info(TERMS)
 
+=======
+>>>>>>> 7c8d023 (Updated info)

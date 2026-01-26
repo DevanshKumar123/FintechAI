@@ -1,15 +1,16 @@
 import yfinance as yf
 
-def get_stock_info(ticker: str):
-    stock = yf.Ticker(ticker)
+DEFAULT_STOCKS = ["RELIANCE.NS", "TCS.NS", "INFY.NS"]
 
-    info = stock.info
-    hist = stock.history(period="6mo")
-
-    return {
-        "name": info.get("longName", ticker),
-        "price": info.get("currentPrice"),
-        "currency": info.get("currency"),
-        "history": hist.tail(5)[["Close"]].to_dict(),
-        "link": f"https://finance.yahoo.com/quote/{ticker}"
-    }
+def get_stock_data():
+    data = []
+    for t in DEFAULT_STOCKS:
+        s = yf.Ticker(t)
+        info = s.info
+        data.append({
+            "name": info.get("longName"),
+            "price": info.get("currentPrice"),
+            "currency": info.get("currency"),
+            "link": f"https://finance.yahoo.com/quote/{t}"
+        })
+    return data

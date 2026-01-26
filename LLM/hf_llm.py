@@ -1,5 +1,7 @@
-from transformers import pipeline
+from huggingface_hub import InferenceClient
+import os
 
+<<<<<<< HEAD
 # ✅ Correct pipeline for FLAN-T5
 llm = pipeline(
     "text2text-generation",
@@ -33,10 +35,51 @@ Rules:
 
 Conversation History:
 {history}
+=======
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-Context:
-{context}
+client = InferenceClient(
+    model="mistralai/Mistral-7B-Instruct-v0.2",
+    token=HF_TOKEN
+)
 
+def generate_answer(context, question, chat_history=None):
+    """
+    Uses Hugging Face conversational API (Chat Completion)
+    """
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a finance-only AI assistant. "
+                "Answer only questions related to finance, stocks, mutual funds, "
+                "investments, and taxation. "
+                "Do not give buy/sell signals or guaranteed returns. "
+                "Mention risks and add a disclaimer."
+            )
+        },
+        {
+            "role": "system",
+            "content": f"Context information:\n{context}"
+        }
+    ]
+
+    # Optional chat memory
+    if chat_history:
+        for role, msg in chat_history:
+            messages.append({"role": role, "content": msg})
+
+    messages.append({"role": "user", "content": question})
+>>>>>>> 7c8d023 (Updated info)
+
+    response = client.chat.completions.create(
+        messages=messages,
+        max_tokens=300,
+        temperature=0.4
+    )
+
+<<<<<<< HEAD
 User Question:
 {question}
 
@@ -47,3 +90,6 @@ Answer:
     return response[0]["generated_text"]
 
 
+=======
+    return response.choices[0].message.content
+>>>>>>> 7c8d023 (Updated info)

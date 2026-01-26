@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Investment refers to allocating money with the expectation of generating
 future income or appreciation over time.
 
@@ -29,3 +30,5 @@ to reduce overall risk.
 
 Q:who is ms dhoni?
 ms dhoni is a good player.
+=======
+>>>>>>> 7c8d023 (Updated info)

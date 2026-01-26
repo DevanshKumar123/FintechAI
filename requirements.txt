@@ -3,6 +3,5 @@ sentence-transformers
 faiss-cpu
 transformers
 huggingface-hub
-langchain
 yfinance
 pandas

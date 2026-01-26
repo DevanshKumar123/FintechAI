@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Taxation in India depends on the type of income and investment.
 
 Q: What is capital gains tax?
@@ -20,3 +21,7 @@ Section 80D provides deductions for health insurance premiums.
 
 Q: Are tax laws fixed?
 No, tax laws may change depending on government policies.
+=======
+In India, equity sold within one year attracts Short Term Capital Gains tax at 15%.
+Long Term Capital Gains above ₹1 lakh are taxed at 10% without indexation.
+>>>>>>> 7c8d023 (Updated info)

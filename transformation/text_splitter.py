@@ -1,23 +1,17 @@
-"""
-Splits large finance text into small chunks
-to improve embedding quality and retrieval accuracy.
-"""
+from ingestion.load_data import load_all_data
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from ingestion.load_data import load_all_text
+def split_text(chunk_size=500, overlap=50):
+    """
+    Simple text splitter without LangChain.
+    Stable and dependency-free.
+    """
+    text = load_all_data()
+    chunks = []
 
-def split_text():
-    raw_text = load_all_text()
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunks.append(text[start:end])
+        start = end - overlap
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50
-    )
-
-    chunks = splitter.split_text(raw_text)
     return chunks
-
-
-if __name__ == "__main__":
-    chunks = split_text()
-    print(f"Total chunks created: {len(chunks)}")
