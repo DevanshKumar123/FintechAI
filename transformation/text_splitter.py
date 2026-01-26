@@ -3,7 +3,7 @@ Splits large finance text into small chunks
 to improve embedding quality and retrieval accuracy.
 """
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from ingestion.load_data import load_all_text
 
 def split_text():

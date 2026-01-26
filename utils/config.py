@@ -1,5 +1,12 @@
-APP_NAME = "AI Finance Assistant"
 DISCLAIMER = """
-⚠️ This is AI-generated financial information for educational purposes only.
-Not SEBI registered. Market risks apply.
+⚠️ Educational purpose only.
+Not SEBI registered.
+Market investments involve risk.
+Consult a certified financial advisor.
+"""
+
+TERMS = """
+No guaranteed returns.
+No buy/sell signals.
+User responsible for decisions.
 """

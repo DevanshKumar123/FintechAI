@@ -1,24 +1,47 @@
-"""
-Generates final AI response using Hugging Face model.
-"""
-
 from transformers import pipeline
 
-def generate_answer(context, question):
-    generator = pipeline(
-        "text-generation",
-        model="google/flan-t5-large"
-    )
+generator = pipeline(
+    "text2text-generation",
+    model="google/flan-t5-large",
+    max_length=400
+)
 
+def generate_answer(context, chat_history, question):
     prompt = f"""
-    Context:
-    {context}
+You are a finance-only AI assistant.
 
-    Question:
-    {question}
+Generate a helpful EDUCATIONAL response.
 
-    Answer with disclaimer:
-    """
+Rules:
+- Do NOT give buy/sell signals
+- Do NOT guarantee returns
+- Do NOT predict prices
+- You MAY mention commonly tracked stocks as examples
+- Use phrases like "commonly observed", "often tracked", "may be analyzed"
+- ALWAYS explain why a stock is mentioned
+- ALWAYS mention risks
+- ALWAYS include a disclaimer
 
-    response = generator(prompt, max_length=300)
-    return response[0]["generated_text"]
+If the question is short-term (1–10 days):
+- Provide 3–4 commonly tracked Indian stocks as EDUCATIONAL EXAMPLES
+- Explain what indicators traders usually observe
+- Do NOT provide entry or exit prices
+
+Context:
+{context}
+
+User Question:
+{question}
+
+Answer format:
+1. Brief explanation
+2. Example stocks with reasons
+3. Indicators to observe
+4. Risk note
+5. Disclaimer
+
+Now generate the answer.
+"""
+
+    result = generator(prompt)
+    return result[0]["generated_text"]

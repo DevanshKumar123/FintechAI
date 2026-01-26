@@ -1,25 +1,96 @@
 import streamlit as st
-from vectordb.build_index import build_faiss_index
+import sys
+import os
+
+# Ensure project root is on path
+sys.path.append(os.getcwd())
+
+from vectorDB.build_index import build_faiss_index
 from retrieval.retriever import retrieve_docs
 from llm.hf_llm import generate_answer
-from utils.config import DISCLAIMER
+from utils.guardrails import is_finance_query
+from utils.config import DISCLAIMER, TERMS
+from realtime.stocks import get_stock_info
 
-st.set_page_config(page_title="AI Finance Assistant")
-
+# ---------------- STREAMLIT CONFIG ----------------
+st.set_page_config(page_title="AI Finance Assistant", layout="centered")
 st.title("💰 AI Finance Assistant")
 
-# Build vector DB once
-documents = build_faiss_index()
+# ---------------- SESSION MEMORY ----------------
+if "chat" not in st.session_state:
+    st.session_state.chat = []
 
-query = st.text_input("Ask a finance-related question:")
+# ---------------- LOAD VECTOR DB (ONCE) ----------------
+@st.cache_resource
+def load_vector_db():
+    return build_faiss_index()
+
+index, docs = load_vector_db()
+
+# ---------------- SHORT-TERM DETECTION ----------------
+SHORT_TERM_KEYWORDS = [
+    "today", "5 days", "short term", "this week",
+    "next few days", "swing", "for few days"
+]
+
+# ---------------- USER INPUT ----------------
+query = st.chat_input("Ask a finance-related question...")
 
 if query:
-    relevant_docs = retrieve_docs(query, documents)
-    context = "\n".join(relevant_docs)
+    # Finance-only guard
+    if not is_finance_query(query):
+        st.error("❌ This assistant only supports finance-related queries.")
+    else:
+        st.session_state.chat.append(("user", query))
 
-    answer = generate_answer(context, query)
+        is_short_term = any(k in query.lower() for k in SHORT_TERM_KEYWORDS)
 
-    st.subheader("📊 AI Response")
-    st.write(answer)
+        # ---------------- REAL-TIME STOCK QUERY ----------------
+        if ".ns" in query.lower() or ".bo" in query.lower():
+            ticker = query.strip().split()[-1].upper()
+            stock = get_stock_info(ticker)
 
-    st.warning(DISCLAIMER)
+            response = f"""
+### 📊 {stock['name']}
+
+- **Current Price:** {stock['price']} {stock['currency']}
+- **Recent Price History (last few entries):**
+  {stock['history']}
+- **More details:** {stock['link']}
+
+⚠️ *This is educational market information only, not a buy/sell recommendation.*
+"""
+
+        # ---------------- RAG + LLM FLOW ----------------
+        else:
+            retrieved_docs = retrieve_docs(query, index, docs)
+
+            context = "\n".join(retrieved_docs)
+
+            # Add short-term framing if needed
+            if is_short_term:
+                context = (
+                    "The user is asking for **educational short-term market analysis**. "
+                    "Do NOT provide buy/sell signals or guaranteed returns. "
+                    "Explain commonly observed stocks, momentum factors, and risks.\n\n"
+                    + context
+                )
+
+            # Build recent chat history (last 5 turns)
+            history_text = "\n".join(
+                [f"{role}: {msg}" for role, msg in st.session_state.chat[-5:]]
+            )
+
+            response = generate_answer(context, history_text, query)
+
+        st.session_state.chat.append(("assistant", response))
+
+# ---------------- RENDER CHAT ----------------
+for role, msg in st.session_state.chat:
+    with st.chat_message(role):
+        st.markdown(msg)
+
+# ---------------- FOOTER ----------------
+st.markdown("---")
+st.warning(DISCLAIMER)
+st.info(TERMS)
