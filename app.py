@@ -23,7 +23,7 @@ SHORT_TERM_KEYWORDS = [
     "this week", "momentum", "swing"
 ]
 
-# ---------------- SIDEBAR (ASSUMPTIONS) ----------------
+# ---------------- SIDEBAR ----------------
 st.sidebar.header("Investment Assumptions (Optional)")
 
 amount = st.sidebar.selectbox(
@@ -41,25 +41,20 @@ horizon = st.sidebar.selectbox(
     ["Not specified", "Short-term (1–2 yrs)", "Medium-term (3–5 yrs)", "Long-term (5+ yrs)"]
 )
 
-# 👉 IMPORTANT FIX: Ignore "Not specified"
 assumptions = {}
-
 if amount != "Not specified":
     assumptions["amount"] = amount
-
 if risk != "Not specified":
     assumptions["risk"] = risk
-
 if horizon != "Not specified":
     assumptions["horizon"] = horizon
 
-# Sidebar feedback
 if assumptions:
-    st.sidebar.success("Assumptions applied to responses")
+    st.sidebar.success("Assumptions applied")
 else:
-    st.sidebar.info("Using generic analysis (no assumptions selected)")
+    st.sidebar.info("Using generic analysis")
 
-# ---------------- LOAD VECTOR DB ----------------
+# ---------------- VECTOR DB ----------------
 @st.cache_resource
 def load_index():
     return build_faiss_index()
@@ -92,29 +87,45 @@ if query:
             if is_short_term:
                 stock_context = (
                     "The user is asking for educational short-term or trending stock analysis. "
-                    "Do NOT provide buy/sell signals or guaranteed returns. "
-                    "Explain momentum, volatility, and market risks.\n\n"
+                    "Do NOT give buy/sell advice. Explain momentum, volatility, and risks.\n\n"
                     + stock_context
                 )
 
-            response = generate_answer(
-                context=stock_context,
-                question=query,
-                assumptions=assumptions,
-                chat_history=st.session_state.chat
-            )
+            # ---- LLM CALL WITH FALLBACK ----
+            with st.spinner("Analyzing market data..."):
+                try:
+                    response = generate_answer(
+                        context=stock_context,
+                        question=query,
+                        assumptions=assumptions,
+                        chat_history=st.session_state.chat
+                    )
+                except Exception:
+                    response = (
+                        stock_context
+                        + "\n⚠️ Market analysis is loading. Please ask again shortly.\n\n"
+                        + DISCLAIMER
+                    )
 
-        # ---------------- NON-STOCK (RAG) ----------------
+        # ---------------- NON-STOCK QUERIES ----------------
         else:
             retrieved = retrieve_docs(query, index, docs)
             context = "\n".join(retrieved)
 
-            response = generate_answer(
-                context=context,
-                question=query,
-                assumptions=assumptions,
-                chat_history=st.session_state.chat
-            )
+            with st.spinner("Analyzing financial information..."):
+                try:
+                    response = generate_answer(
+                        context=context,
+                        question=query,
+                        assumptions=assumptions,
+                        chat_history=st.session_state.chat
+                    )
+                except Exception:
+                    response = (
+                        "⚠️ The AI model is currently warming up. "
+                        "Please try again in a moment.\n\n"
+                        + DISCLAIMER
+                    )
 
         st.session_state.chat.append(("assistant", response))
 
