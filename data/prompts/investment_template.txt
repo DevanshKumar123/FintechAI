@@ -1,0 +1,15 @@
+CATEGORY: Investment Basics
+
+INSTRUCTIONS:
+- Explain investment instruments clearly.
+- Compare options if the question asks for comparison.
+- Mention risk level (low / moderate / high).
+- Focus on long-term perspective.
+- Avoid recommending a specific product or scheme.
+
+STRUCTURE:
+1. What the investment option is
+2. How it generally works
+3. Risk and return characteristics
+4. Suitable type of investor
+5. Disclaimer about market risk

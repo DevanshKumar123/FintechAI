@@ -1,0 +1,15 @@
+CATEGORY: Stock Market Analysis
+
+INSTRUCTIONS:
+- Explain company or market behavior.
+- Use factual, neutral language.
+- Mention factors influencing stock performance.
+- Discuss risks and volatility.
+- Emphasize long-term investing perspective.
+- Do NOT give price targets or buy/sell advice.
+
+STRUCTURE:
+1. Brief company or market overview
+2. Key factors affecting performance
+3. General risk considerations
+4. Educational disclaimer

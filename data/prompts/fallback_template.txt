@@ -1,0 +1,13 @@
+CATEGORY: General Finance Explanation
+
+INSTRUCTIONS:
+- Use this template when the question is finance-related but vague.
+- Provide a broad explanation of the topic.
+- Avoid assumptions.
+- Keep the answer educational and safe.
+
+STRUCTURE:
+1. General explanation
+2. Why the topic is relevant in finance
+3. Common considerations
+4. Safety note

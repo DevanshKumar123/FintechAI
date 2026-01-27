@@ -1,0 +1,15 @@
+CATEGORY: Financial Decision Support
+
+INSTRUCTIONS:
+- Help users think logically, not emotionally.
+- Present multiple options.
+- Discuss pros and cons of each option.
+- Do NOT suggest what they must choose.
+- Encourage informed decision-making.
+
+STRUCTURE:
+1. Clarify the financial situation
+2. Possible options
+3. Pros and cons of each option
+4. Important factors to consider
+5. Safety reminder

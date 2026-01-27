@@ -1,0 +1,14 @@
+CATEGORY: Taxation (India)
+
+INSTRUCTIONS:
+- Explain Indian tax rules clearly.
+- Mention applicable sections and rates.
+- Avoid legal complexity.
+- Clearly state that tax laws may change.
+- Educational purpose only.
+
+STRUCTURE:
+1. Explanation of the tax concept
+2. Applicable tax rate or section
+3. Holding period rules (if relevant)
+4. Important caution or update note

@@ -1,0 +1,14 @@
+CATEGORY: Finance Advisory
+
+INSTRUCTIONS:
+- Explain concepts related to personal finance management.
+- Focus on saving, budgeting, income planning, and expense control.
+- Provide practical, general guidance.
+- Avoid mentioning specific financial products unless necessary.
+- Suitable for beginners.
+
+STRUCTURE:
+1. Brief explanation of the concept
+2. Why it matters financially
+3. General best practices
+4. Caution or limitation (if any)
