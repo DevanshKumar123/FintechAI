@@ -1,16 +1,27 @@
 import yfinance as yf
 
-DEFAULT_STOCKS = ["RELIANCE.NS", "TCS.NS", "INFY.NS"]
-
 def get_stock_data():
-    data = []
-    for t in DEFAULT_STOCKS:
-        s = yf.Ticker(t)
-        info = s.info
-        data.append({
-            "name": info.get("longName"),
-            "price": info.get("currentPrice"),
-            "currency": info.get("currency"),
+    tickers = ["RELIANCE.NS", "TCS.NS", "INFY.NS"]
+    stocks = []
+
+    for t in tickers:
+        stock = yf.Ticker(t)
+        hist = stock.history(period="2d")
+
+        if len(hist) >= 2:
+            prev = hist["Close"][-2]
+            latest = hist["Close"][-1]
+            change_pct = ((latest - prev) / prev) * 100
+        else:
+            latest = hist["Close"][-1]
+            change_pct = 0.0
+
+        stocks.append({
+            "name": stock.info.get("shortName", t),
+            "price": round(latest, 2),
+            "currency": "INR",
+            "change_pct": round(change_pct, 2),
             "link": f"https://finance.yahoo.com/quote/{t}"
         })
-    return data
+
+    return stocks

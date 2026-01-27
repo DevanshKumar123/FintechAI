@@ -9,34 +9,43 @@ client = InferenceClient(
 )
 
 def generate_answer(context, question, assumptions=None, chat_history=None):
+    """
+    Generates finance-only, compliant responses.
+    Sidebar assumptions influence the response when provided.
+    """
 
+    # -------- ASSUMPTIONS TEXT --------
     assumption_text = ""
     if assumptions:
-        assumption_text = f"""
-Assumptions (for educational analysis only):
-- Investment amount: {assumptions.get("amount")}
-- Risk profile: {assumptions.get("risk")}
-- Time horizon: {assumptions.get("horizon")}
+        assumption_text = "Assumptions for educational analysis:\n"
+        for k, v in assumptions.items():
+            assumption_text += f"- {k.capitalize()}: {v}\n"
+
+    # -------- SYSTEM PROMPT --------
+    system_prompt = """
+You are an AI Finance Assistant.
+
+Scope:
+- Answer ONLY finance-related questions.
+- Politely refuse non-finance questions.
+
+Rules:
+- No buy/sell instructions
+- No guaranteed returns
+- Educational, analysis-based insights only
+- Use phrases like "commonly considered", "often analyzed"
+- Always explain reasoning
+- Always mention risks
+- If assumptions are provided, tailor the explanation to those assumptions
+- Always end with a disclaimer
 """
 
     messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a finance-only AI assistant.\n"
-                "You MAY provide educational, assumption-based financial analysis.\n"
-                "You MUST NOT give personalized investment advice or buy/sell instructions.\n"
-                "Use phrases like 'commonly considered', 'often used', 'one possible approach'.\n"
-                "Explain reasoning, risks, and trade-offs.\n"
-                "ALWAYS include a short disclaimer at the end."
-            )
-        },
-        {
-            "role": "system",
-            "content": f"Context:\n{context}\n{assumption_text}"
-        }
+        {"role": "system", "content": system_prompt},
+        {"role": "system", "content": f"Context:\n{context}\n\n{assumption_text}"}
     ]
 
+    # Add chat history for continuity
     if chat_history:
         for role, msg in chat_history[-6:]:
             messages.append({"role": role, "content": msg})

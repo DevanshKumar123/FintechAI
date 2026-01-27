@@ -17,7 +17,13 @@ st.title("💰 AI Finance Assistant")
 if "chat" not in st.session_state:
     st.session_state.chat = []
 
-# ---------------- OPTIONAL ASSUMPTIONS ----------------
+# ---------------- SHORT-TERM KEYWORDS ----------------
+SHORT_TERM_KEYWORDS = [
+    "today", "trending", "short term", "5 days",
+    "this week", "momentum", "swing"
+]
+
+# ---------------- SIDEBAR (ASSUMPTIONS) ----------------
 st.sidebar.header("Investment Assumptions (Optional)")
 
 amount = st.sidebar.selectbox(
@@ -35,11 +41,23 @@ horizon = st.sidebar.selectbox(
     ["Not specified", "Short-term (1–2 yrs)", "Medium-term (3–5 yrs)", "Long-term (5+ yrs)"]
 )
 
-assumptions = {
-    "amount": amount,
-    "risk": risk,
-    "horizon": horizon
-}
+# 👉 IMPORTANT FIX: Ignore "Not specified"
+assumptions = {}
+
+if amount != "Not specified":
+    assumptions["amount"] = amount
+
+if risk != "Not specified":
+    assumptions["risk"] = risk
+
+if horizon != "Not specified":
+    assumptions["horizon"] = horizon
+
+# Sidebar feedback
+if assumptions:
+    st.sidebar.success("Assumptions applied to responses")
+else:
+    st.sidebar.info("Using generic analysis (no assumptions selected)")
 
 # ---------------- LOAD VECTOR DB ----------------
 @st.cache_resource
@@ -56,17 +74,27 @@ if query:
         st.error("❌ This assistant supports only finance-related queries.")
     else:
         st.session_state.chat.append(("user", query))
+        is_short_term = any(k in query.lower() for k in SHORT_TERM_KEYWORDS)
 
-        # ---------------- STOCK-RELATED QUERY ----------------
+        # ---------------- STOCK QUERIES ----------------
         if "stock" in query.lower():
             stocks = get_stock_data()
 
-            stock_context = ""
+            stock_context = "Commonly tracked stocks with recent market movement:\n\n"
             for s in stocks:
                 stock_context += (
-                    f"{s['name']} | "
-                    f"Price: {s['price']} {s['currency']} | "
-                    f"{s['link']}\n"
+                    f"- {s['name']}\n"
+                    f"  Current Price: {s['price']} {s['currency']}\n"
+                    f"  1-Day Change: {s['change_pct']}%\n"
+                    f"  Reference Link: {s['link']}\n\n"
+                )
+
+            if is_short_term:
+                stock_context = (
+                    "The user is asking for educational short-term or trending stock analysis. "
+                    "Do NOT provide buy/sell signals or guaranteed returns. "
+                    "Explain momentum, volatility, and market risks.\n\n"
+                    + stock_context
                 )
 
             response = generate_answer(
@@ -76,7 +104,7 @@ if query:
                 chat_history=st.session_state.chat
             )
 
-        # ---------------- RAG + LLM ----------------
+        # ---------------- NON-STOCK (RAG) ----------------
         else:
             retrieved = retrieve_docs(query, index, docs)
             context = "\n".join(retrieved)
@@ -90,7 +118,7 @@ if query:
 
         st.session_state.chat.append(("assistant", response))
 
-# ---------------- RENDER CHAT ----------------
+# ---------------- CHAT RENDER ----------------
 for role, msg in st.session_state.chat:
     with st.chat_message(role):
         st.markdown(msg)
