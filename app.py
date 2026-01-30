@@ -1,137 +1,182 @@
 import streamlit as st
 import os, sys
+from datetime import datetime
 
 sys.path.append(os.getcwd())
 
 from vectordb.build_index import build_faiss_index
 from retrieval.retriever import retrieve_docs
-from realtime.stocks import get_stock_data
+from api.stock_api import (
+    get_live_stock_price,
+    get_top_gainers,
+    get_top_losers,
+    get_gold_price_india
+)
+from api.market_news import get_market_news
 from llm.hf_llm import generate_answer
 from utils.guardrails import is_finance_query
 from utils.config import DISCLAIMER
+from utils.keywords import STOCK_KEYWORDS, NEWS_KEYWORDS
 
-st.set_page_config(page_title="AI Finance Chatbot", layout="centered")
+# -------------------------------------------------
+st.set_page_config(page_title="FinVise", layout="centered")
 st.title("💰 AI Finance Assistant")
 
-# ---------------- SESSION MEMORY ----------------
-if "chat" not in st.session_state:
-    st.session_state.chat = []
+# -------------------------------------------------
+if "chats" not in st.session_state:
+    st.session_state.chats = {}
 
-# ---------------- SHORT-TERM KEYWORDS ----------------
-SHORT_TERM_KEYWORDS = [
-    "today", "trending", "short term", "5 days",
-    "this week", "momentum", "swing"
-]
+if "active_chat" not in st.session_state:
+    cid = f"Chat {datetime.now().strftime('%H:%M:%S')}"
+    st.session_state.chats[cid] = []
+    st.session_state.active_chat = cid
 
-# ---------------- SIDEBAR ----------------
-st.sidebar.header("Investment Assumptions (Optional)")
+if "theme" not in st.session_state:
+    st.session_state.theme = "Light"
 
-amount = st.sidebar.selectbox(
-    "Investment Amount",
-    ["Not specified", "₹50,000", "₹1 lakh", "₹5 lakh"]
+if "quick_query" not in st.session_state:
+    st.session_state.quick_query = None
+
+# -------------------------------------------------
+def apply_theme(theme):
+    bg_bot = "#1e1e1e" if theme == "Dark" else "#f1f3f8"
+    text_bot = "white" if theme == "Dark" else "#1a1a1a"
+
+    st.markdown(
+        f"""
+        <style>
+        .chat-row {{ display:flex; margin:4px 0; }}
+        .chat-row.user {{ justify-content:flex-end; }}
+        .chat-row.bot {{ justify-content:flex-start; }}
+
+        .user-bubble {{
+            background:#2b3fa3; color:white;
+            padding:10px 14px; border-radius:14px; max-width:70%;
+        }}
+        .bot-bubble {{
+            background:{bg_bot}; color:{text_bot};
+            padding:10px 14px; border-radius:14px; max-width:70%;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+apply_theme(st.session_state.theme)
+
+# -------------------------------------------------
+# SIDEBAR
+# -------------------------------------------------
+st.sidebar.title("💬 Chats")
+
+st.session_state.theme = st.sidebar.radio(
+    "Theme", ["Light", "Dark"],
+    index=0 if st.session_state.theme == "Light" else 1
 )
 
-risk = st.sidebar.selectbox(
-    "Risk Profile",
-    ["Not specified", "Low", "Moderate", "High"]
-)
+st.sidebar.divider()
 
-horizon = st.sidebar.selectbox(
-    "Time Horizon",
-    ["Not specified", "Short-term (1–2 yrs)", "Medium-term (3–5 yrs)", "Long-term (5+ yrs)"]
-)
+st.sidebar.subheader("⚡ Quick Ask")
+if st.sidebar.button("💰 Today’s Top Gainers"):
+    st.session_state.quick_query = "TOP_GAINERS"
+if st.sidebar.button("📉 Today’s Top Losers"):
+    st.session_state.quick_query = "TOP_LOSERS"
+if st.sidebar.button("🏦 Best SIP options"):
+    st.session_state.quick_query = "Best SIP options for long term investment"
+if st.sidebar.button("📊 NIFTY outlook"):
+    st.session_state.quick_query = "NIFTY outlook for this week"
+if st.sidebar.button("🪙 Gold price today"):
+    st.session_state.quick_query = "GOLD_PRICE"
 
-assumptions = {}
-if amount != "Not specified":
-    assumptions["amount"] = amount
-if risk != "Not specified":
-    assumptions["risk"] = risk
-if horizon != "Not specified":
-    assumptions["horizon"] = horizon
+st.sidebar.divider()
 
-if assumptions:
-    st.sidebar.success("Assumptions applied")
-else:
-    st.sidebar.info("Using generic analysis")
+search_query = st.sidebar.text_input("🔍 Search chats")
 
-# ---------------- VECTOR DB ----------------
+if st.sidebar.button("➕ New Chat"):
+    cid = f"Chat {datetime.now().strftime('%H:%M:%S')}"
+    st.session_state.chats[cid] = []
+    st.session_state.active_chat = cid
+
+st.sidebar.divider()
+
+for cid in list(st.session_state.chats.keys()):
+    if search_query.lower() not in cid.lower():
+        continue
+    col1, col2 = st.sidebar.columns([4, 1])
+    if col1.button(cid, key=f"open_{cid}"):
+        st.session_state.active_chat = cid
+    if col2.button("🗑️   ", key=f"del_{cid}"):
+        del st.session_state.chats[cid]
+        st.rerun()
+
+# -------------------------------------------------
 @st.cache_resource
 def load_index():
     return build_faiss_index()
 
 index, docs = load_index()
+chat = st.session_state.chats[st.session_state.active_chat]
 
-# ---------------- USER INPUT ----------------
-query = st.chat_input("Ask finance, stock, tax, or investment questions...")
+# -------------------------------------------------
+user_input = st.chat_input("Ask finance, stock, tax, or investment questions...")
 
+query = None
+if st.session_state.quick_query:
+    query = st.session_state.quick_query
+    st.session_state.quick_query = None
+elif user_input:
+    query = user_input
+
+# -------------------------------------------------
 if query:
-    if not is_finance_query(query):
-        st.error("❌ This assistant supports only finance-related queries.")
+    chat.append(("user", query))
+
+    # QUICK ACTIONS
+    if query == "TOP_GAINERS":
+        chat.append(("assistant", get_top_gainers()))
+    elif query == "TOP_LOSERS":
+        chat.append(("assistant", get_top_losers()))
+    elif query == "GOLD_PRICE":
+        chat.append(("assistant", get_gold_price_india()))
+
     else:
-        st.session_state.chat.append(("user", query))
-        is_short_term = any(k in query.lower() for k in SHORT_TERM_KEYWORDS)
-
-        # ---------------- STOCK QUERIES ----------------
-        if "stock" in query.lower():
-            stocks = get_stock_data()
-
-            stock_context = "Commonly tracked stocks with recent market movement:\n\n"
-            for s in stocks:
-                stock_context += (
-                    f"- {s['name']}\n"
-                    f"  Current Price: {s['price']} {s['currency']}\n"
-                    f"  1-Day Change: {s['change_pct']}%\n"
-                    f"  Reference Link: {s['link']}\n\n"
-                )
-
-            if is_short_term:
-                stock_context = (
-                    "The user is asking for educational short-term or trending stock analysis. "
-                    "Do NOT give buy/sell advice. Explain momentum, volatility, and risks.\n\n"
-                    + stock_context
-                )
-
-            # ---- LLM CALL WITH FALLBACK ----
-            with st.spinner("Analyzing market data..."):
-                try:
-                    response = generate_answer(
-                        context=stock_context,
-                        question=query,
-                        assumptions=assumptions,
-                        chat_history=st.session_state.chat
-                    )
-                except Exception:
-                    response = (
-                        stock_context
-                        + "\n⚠️ Market analysis is loading. Please ask again shortly.\n\n"
-                        + DISCLAIMER
-                    )
-
-        # ---------------- NON-STOCK QUERIES ----------------
+        if not is_finance_query(query):
+            chat.append(("assistant", "⚠️ I can answer only finance-related questions."))
         else:
-            retrieved = retrieve_docs(query, index, docs)
-            context = "\n".join(retrieved)
+            q = query.lower()
+            is_stock = any(k in q for k in STOCK_KEYWORDS)
+            is_news = any(k in q for k in NEWS_KEYWORDS)
+            is_price_query = any(w in q for w in ["price", "today", "current", "share"])
 
-            with st.spinner("Analyzing financial information..."):
-                try:
-                    response = generate_answer(
-                        context=context,
-                        question=query,
-                        assumptions=assumptions,
-                        chat_history=st.session_state.chat
-                    )
-                except Exception:
-                    response = (
-                        "⚠️ The AI model is currently warming up. "
-                        "Please try again in a moment.\n\n"
-                        + DISCLAIMER
-                    )
+            # STOCK PRICE
+            if is_stock and is_price_query:
+                chat.append(("assistant", get_live_stock_price(query)
+                             or "⚠️ Stock price not available right now."))
 
-        st.session_state.chat.append(("assistant", response))
+            # SIMPLE DEFINITIONS
+            elif q.startswith("what is") or q.startswith("define"):
+                chat.append(("assistant", generate_answer("", query)))
 
-# ---------------- CHAT RENDER ----------------
-for role, msg in st.session_state.chat:
-    with st.chat_message(role):
-        st.markdown(msg)
+            # NEWS
+            elif is_news:
+                chat.append(("assistant", generate_answer(get_market_news(), query)))
+
+            # GENERAL FINANCE
+            else:
+                context = "\n".join(retrieve_docs(query, index, docs))
+                chat.append(("assistant", generate_answer(context, query)))
+
+# -------------------------------------------------
+for role, msg in chat:
+    bubble = "user-bubble" if role == "user" else "bot-bubble"
+    align = "user" if role == "user" else "bot"
+    st.markdown(
+        f"""
+        <div class="chat-row {align}">
+            <div class="{bubble}">{msg}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 st.warning(DISCLAIMER)

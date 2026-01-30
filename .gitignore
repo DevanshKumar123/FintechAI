@@ -1,0 +1,18 @@
+# Virtual environment
+.venv/
+fenv/
+env/
+
+# Environment variables
+.env
+
+# Cache
+__pycache__/
+*.pyc
+
+# Streamlit
+.streamlit/
+
+# FAISS / vector DB (optional)
+*.index
+*.pkl
