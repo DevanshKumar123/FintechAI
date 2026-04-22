@@ -2,7 +2,7 @@ import streamlit as st
 import os, sys
 from datetime import datetime
 
-sys.path.append(os.getcwd())
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from vectordb.build_index import build_faiss_index
 from retrieval.retriever import retrieve_docs
