@@ -13,6 +13,3 @@ __pycache__/
 # Streamlit
 .streamlit/
 
-# FAISS / vector DB (optional)
-*.index
-*.pkl
