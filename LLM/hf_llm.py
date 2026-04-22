@@ -138,6 +138,8 @@ Rules:
 - No buy/sell advice
 - Always mention risks
 - End with a disclaimer
+- Always return answer in summarized form not too long and answer should not miss the important points
+- no briefing is required only give important and valid points
 """
 
     context = context.strip()[:1500]

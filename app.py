@@ -73,7 +73,6 @@ st.session_state.theme = st.sidebar.radio(
     "Theme", ["Light", "Dark"],
     index=0 if st.session_state.theme == "Light" else 1
 )
-
 st.sidebar.divider()
 
 st.sidebar.subheader("⚡ Quick Ask")
