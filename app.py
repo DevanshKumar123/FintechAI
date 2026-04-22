@@ -19,7 +19,7 @@ from utils.config import DISCLAIMER
 from utils.keywords import STOCK_KEYWORDS, NEWS_KEYWORDS
 
 # -------------------------------------------------
-st.set_page_config(page_title="FinVise", layout="centered")
+st.set_page_config(page_title="FintechAI", layout="centered")
 st.title("💰 AI Finance Assistant")
 
 # -------------------------------------------------
