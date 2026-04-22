@@ -2,7 +2,8 @@ import streamlit as st
 import os, sys
 from datetime import datetime
 
-sys.path.insert(0, os.getcwd())
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
 
 from vectordb.build_index import build_faiss_index
 from retrieval.retriever import retrieve_docs
