@@ -5,7 +5,7 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 
-from vectordb.build_index import build_faiss_index
+from vectorDB.build_index import build_faiss_index
 from retrieval.retriever import retrieve_docs
 from api.stock_api import (
     get_live_stock_price,
@@ -14,7 +14,7 @@ from api.stock_api import (
     get_gold_price_india
 )
 from api.market_news import get_market_news
-from llm.hf_llm import generate_answer
+from LLM.hf_llm import generate_answer
 from utils.guardrails import is_finance_query
 from utils.config import DISCLAIMER
 from utils.keywords import STOCK_KEYWORDS, NEWS_KEYWORDS
